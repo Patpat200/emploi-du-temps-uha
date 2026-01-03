@@ -17,3 +17,12 @@
 - [x] Gérer les états de chargement et d'erreur
 - [x] Optimiser les performances et animations
 - [x] Générer et configurer le logo de l'application
+
+## Nouvelles fonctionnalités - Vue Calendrier
+
+- [x] Créer le composant CalendarView pour afficher le calendrier mensuel
+- [x] Implémenter la navigation entre les semaines
+- [x] Ajouter les indicateurs de cours sur les jours du calendrier
+- [x] Créer un nouvel onglet pour la vue calendrier
+- [x] Ajouter la sélection de date pour afficher les cours du jour
+- [x] Intégrer la vue calendrier avec les données existantes
