@@ -47,18 +47,36 @@ export async function setICSUrl(url: string): Promise<void> {
  * Télécharge le fichier ICS depuis l'URL
  */
 async function downloadICS(url: string): Promise<string> {
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'Accept': 'text/calendar, application/rss+xml',
-    },
-  });
+  console.log('[SYNC] Téléchargement depuis:', url);
   
-  if (!response.ok) {
-    throw new Error(`Erreur HTTP ${response.status}: ${response.statusText}`);
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'text/calendar, application/rss+xml, */*',
+        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15',
+      },
+    });
+    
+    console.log('[SYNC] Status:', response.status);
+    console.log('[SYNC] Headers:', {
+      contentType: response.headers.get('content-type'),
+      contentLength: response.headers.get('content-length'),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Erreur HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const text = await response.text();
+    console.log('[SYNC] Contenu reçu:', text.length, 'caractères');
+    
+    return text;
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error('[SYNC] Erreur de téléchargement:', errorMsg);
+    throw error;
   }
-  
-  return await response.text();
 }
 
 /**
@@ -68,6 +86,7 @@ async function saveEvents(events: CourseEvent[]): Promise<void> {
   try {
     const jsonData = JSON.stringify(events);
     await AsyncStorage.setItem(STORAGE_KEY, jsonData);
+    console.log('[SYNC] Sauvegardé:', events.length, 'événements');
   } catch (error) {
     console.error('Erreur lors de la sauvegarde des événements:', error);
     throw error;
@@ -82,10 +101,12 @@ export async function loadEvents(): Promise<CourseEvent[]> {
     const jsonData = await AsyncStorage.getItem(STORAGE_KEY);
     
     if (!jsonData) {
+      console.log('[SYNC] Aucun événement en cache');
       return [];
     }
     
     const events = JSON.parse(jsonData);
+    console.log('[SYNC] Chargé du cache:', events.length, 'événements');
     
     // Reconvertir les dates en objets Date
     return events.map((event: any) => ({
@@ -128,14 +149,14 @@ async function setLastSyncDate(date: Date): Promise<void> {
  * Synchronise l'emploi du temps depuis l'URL
  */
 export async function syncSchedule(): Promise<SyncResult> {
+  console.log('[SYNC] Début de la synchronisation');
+  
   try {
     const url = await getICSUrl();
     
     if (!url) {
       throw new Error('Aucune URL configurée. Veuillez définir l\'URL du flux dans les paramètres.');
     }
-    
-    console.log('Synchronisation depuis:', url);
     
     // Télécharger le fichier ICS
     const icsContent = await downloadICS(url);
@@ -146,11 +167,14 @@ export async function syncSchedule(): Promise<SyncResult> {
     
     // Vérifier si c'est une erreur HTML (erreur serveur)
     if (icsContent.includes('<!doctype') || icsContent.includes('<html')) {
+      console.error('[SYNC] Réponse HTML détectée (erreur serveur)');
       throw new Error('Le serveur a retourné une erreur. L\'URL du flux est peut-être invalide ou le serveur est en maintenance.');
     }
     
     // Parser le contenu
+    console.log('[SYNC] Parsing du contenu...');
     const events = parseICS(icsContent);
+    console.log('[SYNC] Événements parsés:', events.length);
     
     if (events.length === 0) {
       throw new Error('Aucun événement trouvé dans le flux. Vérifiez que l\'URL est correcte.');
@@ -167,7 +191,7 @@ export async function syncSchedule(): Promise<SyncResult> {
     const now = new Date();
     await setLastSyncDate(now);
     
-    console.log('Synchronisation réussie:', modifiedEvents.length, 'événements');
+    console.log('[SYNC] Synchronisation réussie');
     
     return {
       success: true,
@@ -176,7 +200,7 @@ export async function syncSchedule(): Promise<SyncResult> {
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue lors de la synchronisation';
-    console.error('Erreur lors de la synchronisation:', errorMessage);
+    console.error('[SYNC] Erreur:', errorMessage);
     
     // En cas d'erreur, retourner les événements en cache
     const cachedEvents = await loadEvents();
@@ -231,11 +255,16 @@ function detectModifications(
  * Initialise le service de synchronisation
  */
 export async function initSyncService(): Promise<void> {
+  console.log('[SYNC] Initialisation du service');
+  
   // Charger les événements en cache au démarrage
   const events = await loadEvents();
   
   if (events.length === 0) {
+    console.log('[SYNC] Pas de cache, synchronisation immédiate');
     // Première utilisation, synchroniser immédiatement
     await syncSchedule();
+  } else {
+    console.log('[SYNC] Cache trouvé:', events.length, 'événements');
   }
 }

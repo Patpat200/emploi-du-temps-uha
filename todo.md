@@ -33,4 +33,7 @@
 - [x] Améliorer la gestion des erreurs de synchronisation
 - [x] Ajouter des messages d'erreur détaillés
 - [x] Implémenter le test d'URL dans les paramètres
-- [ ] Support du format RSS (serveur UHA en erreur actuellement)
+- [x] Ajouter du logging détaillé pour le débogage
+- [x] Créer des tests pour le service de synchronisation
+- [x] Ajouter un composant de débogage
+- [x] Corriger les problèmes de chargement initial des données

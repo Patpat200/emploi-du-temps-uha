@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { View, Text, FlatList, RefreshControl, ActivityIndicator } from 'react-native';
 import { ScreenContainer } from '@/components/screen-container';
 import { CourseCard } from '@/components/course-card';
 import { DayHeader } from '@/components/day-header';
 import { CourseDetailModal } from '@/components/course-detail-modal';
 import { useColors } from '@/hooks/use-colors';
-import { syncSchedule, loadEvents, getLastSyncDate } from '@/lib/sync-service';
+import { syncSchedule, loadEvents, getLastSyncDate, initSyncService } from '@/lib/sync-service';
 import { groupEventsByDay, type CourseEvent } from '@/lib/ics-parser';
 
 interface DaySection {
