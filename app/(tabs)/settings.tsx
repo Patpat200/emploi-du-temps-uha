@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TextInput, ScrollView, Pressable, Switch, Alert } from 'react-native';
+import { View, Text, TextInput, ScrollView, Pressable, Switch, Alert, ActivityIndicator } from 'react-native';
 import { ScreenContainer } from '@/components/screen-container';
 import { useColors } from '@/hooks/use-colors';
 import { getICSUrl, setICSUrl, syncSchedule } from '@/lib/sync-service';
@@ -14,6 +14,7 @@ export default function SettingsScreen() {
   const [syncInterval, setSyncInterval] = useState(15);
   const [notifications, setNotifications] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
   
   useEffect(() => {
     loadSettings();
@@ -36,6 +37,7 @@ export default function SettingsScreen() {
     }
     
     setSaving(true);
+    setTesting(true);
     
     try {
       await setICSUrl(icsUrl);
@@ -44,24 +46,28 @@ export default function SettingsScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
       
-      Alert.alert(
-        'Succès',
-        'URL enregistrée. Voulez-vous synchroniser maintenant ?',
-        [
-          { text: 'Plus tard', style: 'cancel' },
-          {
-            text: 'Synchroniser',
-            onPress: async () => {
-              await syncSchedule();
-              Alert.alert('Succès', 'Synchronisation terminée');
-            },
-          },
-        ]
-      );
+      // Synchroniser immédiatement pour tester l'URL
+      const result = await syncSchedule();
+      
+      if (result.success) {
+        Alert.alert(
+          'Succès',
+          `Synchronisation réussie ! ${result.events.length} événements chargés.`
+        );
+      } else {
+        Alert.alert(
+          'Erreur de synchronisation',
+          result.error || 'Impossible de télécharger les données. Vérifiez l\'URL et réessayez.'
+        );
+      }
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible d\'enregistrer l\'URL');
+      Alert.alert(
+        'Erreur',
+        error instanceof Error ? error.message : 'Impossible d\'enregistrer l\'URL'
+      );
     } finally {
       setSaving(false);
+      setTesting(false);
     }
   };
   
@@ -102,7 +108,7 @@ export default function SettingsScreen() {
             URL du flux ICS
           </Text>
           <Text className="text-sm text-muted mb-3">
-            L'URL de votre emploi du temps depuis le site de l'UHA
+            Collez l'URL de votre emploi du temps depuis le site de l'UHA
           </Text>
           <TextInput
             value={icsUrl}
@@ -112,11 +118,12 @@ export default function SettingsScreen() {
             className="bg-surface rounded-xl p-4 text-foreground mb-3"
             multiline
             numberOfLines={3}
+            editable={!testing}
             style={{ color: colors.foreground }}
           />
           <Pressable
             onPress={handleSaveUrl}
-            disabled={saving}
+            disabled={saving || testing}
             style={({ pressed }) => [
               {
                 opacity: pressed ? 0.7 : 1,
@@ -125,15 +132,24 @@ export default function SettingsScreen() {
           >
             <View
               className={cn(
-                'bg-primary rounded-xl p-4 items-center',
-                saving && 'opacity-50'
+                'bg-primary rounded-xl p-4 items-center flex-row justify-center gap-2',
+                (saving || testing) && 'opacity-50'
               )}
             >
+              {(saving || testing) && (
+                <ActivityIndicator size="small" color="#ffffff" />
+              )}
               <Text className="text-white font-semibold">
-                {saving ? 'Enregistrement...' : 'Enregistrer l\'URL'}
+                {testing ? 'Test en cours...' : 'Enregistrer et tester'}
               </Text>
             </View>
           </Pressable>
+          
+          <View className="bg-blue-500/10 rounded-lg p-3 mt-3">
+            <Text className="text-blue-600 text-xs">
+              💡 Conseil: Cliquez sur "Enregistrer et tester" pour vérifier que l'URL fonctionne correctement.
+            </Text>
+          </View>
         </View>
         
         {/* Synchronisation automatique */}

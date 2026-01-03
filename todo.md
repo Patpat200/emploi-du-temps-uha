@@ -26,3 +26,11 @@
 - [x] Créer un nouvel onglet pour la vue calendrier
 - [x] Ajouter la sélection de date pour afficher les cours du jour
 - [x] Intégrer la vue calendrier avec les données existantes
+
+
+## Bugs à corriger
+
+- [x] Améliorer la gestion des erreurs de synchronisation
+- [x] Ajouter des messages d'erreur détaillés
+- [x] Implémenter le test d'URL dans les paramètres
+- [ ] Support du format RSS (serveur UHA en erreur actuellement)

@@ -50,12 +50,12 @@ async function downloadICS(url: string): Promise<string> {
   const response = await fetch(url, {
     method: 'GET',
     headers: {
-      'Accept': 'text/calendar',
+      'Accept': 'text/calendar, application/rss+xml',
     },
   });
   
   if (!response.ok) {
-    throw new Error(`Erreur HTTP: ${response.status}`);
+    throw new Error(`Erreur HTTP ${response.status}: ${response.statusText}`);
   }
   
   return await response.text();
@@ -131,14 +131,29 @@ export async function syncSchedule(): Promise<SyncResult> {
   try {
     const url = await getICSUrl();
     
+    if (!url) {
+      throw new Error('Aucune URL configurée. Veuillez définir l\'URL du flux dans les paramètres.');
+    }
+    
+    console.log('Synchronisation depuis:', url);
+    
     // Télécharger le fichier ICS
     const icsContent = await downloadICS(url);
+    
+    if (!icsContent || icsContent.trim().length === 0) {
+      throw new Error('Le serveur a retourné une réponse vide. Vérifiez l\'URL.');
+    }
+    
+    // Vérifier si c'est une erreur HTML (erreur serveur)
+    if (icsContent.includes('<!doctype') || icsContent.includes('<html')) {
+      throw new Error('Le serveur a retourné une erreur. L\'URL du flux est peut-être invalide ou le serveur est en maintenance.');
+    }
     
     // Parser le contenu
     const events = parseICS(icsContent);
     
     if (events.length === 0) {
-      throw new Error('Aucun événement trouvé dans le fichier ICS');
+      throw new Error('Aucun événement trouvé dans le flux. Vérifiez que l\'URL est correcte.');
     }
     
     // Charger les événements précédents pour détecter les modifications
@@ -152,13 +167,16 @@ export async function syncSchedule(): Promise<SyncResult> {
     const now = new Date();
     await setLastSyncDate(now);
     
+    console.log('Synchronisation réussie:', modifiedEvents.length, 'événements');
+    
     return {
       success: true,
       events: modifiedEvents,
       lastSync: now,
     };
   } catch (error) {
-    console.error('Erreur lors de la synchronisation:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue lors de la synchronisation';
+    console.error('Erreur lors de la synchronisation:', errorMessage);
     
     // En cas d'erreur, retourner les événements en cache
     const cachedEvents = await loadEvents();
@@ -168,7 +186,7 @@ export async function syncSchedule(): Promise<SyncResult> {
       success: false,
       events: cachedEvents,
       lastSync: lastSync || new Date(),
-      error: error instanceof Error ? error.message : 'Erreur inconnue',
+      error: errorMessage,
     };
   }
 }
