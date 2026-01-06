@@ -4,10 +4,12 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { parseICS, type CourseEvent } from './ics-parser';
+import { recordModifiedEvent, cleanupExpiredModifications } from './notification-service';
 
 const STORAGE_KEY = '@emploi_du_temps_events';
 const LAST_SYNC_KEY = '@emploi_du_temps_last_sync';
 const ICS_URL_KEY = '@emploi_du_temps_ics_url';
+const COURSES_HASH_KEY = '@emploi_du_temps_courses_hash';
 
 // URL par défaut fournie par l'utilisateur
 const DEFAULT_ICS_URL = 'https://www.emploisdutemps.uha.fr/jsp/custom/modules/plannings/anonymous_cal.jsp?data=60dc6b2fb1eac2554ee1103516dc50b4e04e91d0526fa823618ff6fa9e7d7198dd65eb4f5911f810ef6a36d3b58d61bf314d669fae9ca422200cb711a9b76537,1';
@@ -17,6 +19,17 @@ export interface SyncResult {
   events: CourseEvent[];
   lastSync: Date;
   error?: string;
+}
+
+/**
+ * Génère un hash simple pour détecter les changements
+ */
+function hashCourses(courses: CourseEvent[]): string {
+  const sortedCourses = courses.sort((a, b) => a.id.localeCompare(b.id));
+  const courseStrings = sortedCourses.map(c => 
+    `${c.id}|${c.title}|${c.startTime.getTime()}|${c.endTime.getTime()}|${c.location}|${c.status}`
+  );
+  return courseStrings.join('||');
 }
 
 /**
@@ -180,22 +193,85 @@ export async function syncSchedule(): Promise<SyncResult> {
       throw new Error('Aucun événement trouvé dans le flux. Vérifiez que l\'URL est correcte.');
     }
     
-    // Charger les événements précédents pour détecter les modifications
-    const previousEvents = await loadEvents();
-    const modifiedEvents = detectModifications(previousEvents, events);
+    // Récupérer les anciens cours pour détecter les changements
+    const oldCourses = await loadEvents();
+    const oldHash = oldCourses.length > 0 ? hashCourses(oldCourses) : '';
+    const newHash = hashCourses(events);
+
+    // Détecter les changements
+    if (oldHash !== newHash && oldCourses.length > 0) {
+      console.log('[SYNC] Changements détectés dans l\'emploi du temps');
+      
+      const oldCoursesMap = new Map(oldCourses.map(c => [c.id, c]));
+      const newCoursesMap = new Map(events.map(c => [c.id, c]));
+      
+      // Cours créés
+      for (const course of events) {
+        if (!oldCoursesMap.has(course.id)) {
+          await recordModifiedEvent(
+            course.id,
+            course.title,
+            'created',
+            `Nouveau cours: ${course.title} à ${course.startTime.toLocaleTimeString('fr-FR')}`
+          );
+        }
+      }
+      
+      // Cours modifiés
+      for (const course of events) {
+        const oldCourse = oldCoursesMap.get(course.id);
+        if (oldCourse && JSON.stringify(oldCourse) !== JSON.stringify(course)) {
+          const changes = [];
+          if (oldCourse.location !== course.location) {
+            changes.push(`Salle: ${oldCourse.location} → ${course.location}`);
+          }
+          if (oldCourse.startTime.getTime() !== course.startTime.getTime()) {
+            changes.push(`Heure: ${oldCourse.startTime.toLocaleTimeString('fr-FR')} → ${course.startTime.toLocaleTimeString('fr-FR')}`);
+          }
+          if (oldCourse.status !== course.status) {
+            changes.push(`Statut: ${oldCourse.status} → ${course.status}`);
+          }
+          
+          if (changes.length > 0) {
+            await recordModifiedEvent(
+              course.id,
+              course.title,
+              'modified',
+              changes.join(', ')
+            );
+          }
+        }
+      }
+      
+      // Cours supprimés/annulés
+      for (const oldCourse of oldCourses) {
+        if (!newCoursesMap.has(oldCourse.id)) {
+          await recordModifiedEvent(
+            oldCourse.id,
+            oldCourse.title,
+            'cancelled',
+            `Cours annulé: ${oldCourse.title}`
+          );
+        }
+      }
+    }
     
     // Sauvegarder les nouveaux événements
-    await saveEvents(modifiedEvents);
+    await saveEvents(events);
     
     // Mettre à jour la date de dernière sync
     const now = new Date();
     await setLastSyncDate(now);
+    await AsyncStorage.setItem(COURSES_HASH_KEY, newHash);
+    
+    // Nettoyer les modifications expirées
+    await cleanupExpiredModifications();
     
     console.log('[SYNC] Synchronisation réussie');
     
     return {
       success: true,
-      events: modifiedEvents,
+      events,
       lastSync: now,
     };
   } catch (error) {
@@ -213,42 +289,6 @@ export async function syncSchedule(): Promise<SyncResult> {
       error: errorMessage,
     };
   }
-}
-
-/**
- * Détecte les modifications entre deux listes d'événements
- */
-function detectModifications(
-  previousEvents: CourseEvent[],
-  newEvents: CourseEvent[]
-): CourseEvent[] {
-  const previousMap = new Map(previousEvents.map(e => [e.id, e]));
-  
-  return newEvents.map(newEvent => {
-    const previousEvent = previousMap.get(newEvent.id);
-    
-    if (!previousEvent) {
-      // Nouvel événement
-      return newEvent;
-    }
-    
-    // Vérifier si l'événement a été modifié
-    const isModified =
-      previousEvent.title !== newEvent.title ||
-      previousEvent.startTime.getTime() !== newEvent.startTime.getTime() ||
-      previousEvent.endTime.getTime() !== newEvent.endTime.getTime() ||
-      previousEvent.location !== newEvent.location ||
-      previousEvent.lastModified.getTime() !== newEvent.lastModified.getTime();
-    
-    if (isModified) {
-      return {
-        ...newEvent,
-        status: 'modified' as const,
-      };
-    }
-    
-    return newEvent;
-  });
 }
 
 /**

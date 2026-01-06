@@ -37,3 +37,13 @@
 - [x] Créer des tests pour le service de synchronisation
 - [x] Ajouter un composant de débogage
 - [x] Corriger les problèmes de chargement initial des données
+
+
+## Nouvelles fonctionnalités - Couleurs et Notifications
+
+- [x] Créer un système de couleurs pour chaque matière
+- [x] Implémenter le cache intelligent avec détection des changements
+- [x] Ajouter les notifications pour les changements d'emploi du temps
+- [x] Faire disparaître le statut "modifié" après 1 heure
+- [x] Ajouter un système de timestamps pour les modifications
+- [x] Créer des tests pour le système de couleurs et notifications
