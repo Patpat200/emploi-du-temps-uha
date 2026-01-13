@@ -1,23 +1,21 @@
 # 📅 Emploi du Temps UHA
 
-## Sommaire
-
-- [Fonctionnalités](#-fonctionnalités)
-- [Aperçu](#-aperçu)
-- [Stack Technique](#-stack-technique)
-- [Installation & Démarrage](#-installer-lapplication-android)
-- [Construction Android (APK)](#-générer-lapk)
-- [Architecture du Projet](#-architecture-du-projet)
-- [Configuration](#-configuration)
-- [Contribuer](#-contribuer)
-
-
 ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Platform](https://img.shields.io/badge/platform-iOS%20%7C%20Android-lightgrey.svg)
 ![Built with](https://img.shields.io/badge/built%20with-Expo-000020.svg)
 
 Une application mobile moderne et fluide pour consulter l'emploi du temps de l'**Université de Haute-Alsace (UHA)**. Conçue pour simplifier la vie des étudiants grâce à la synchronisation automatique et aux notifications de changement de cours.
+
+## Sommaire
+
+- [Fonctionnalités](#fonctionnalités)
+- [Aperçu](#aperçu)
+- [Stack Technique](#stack-technique)
+- [Installation & Démarrage](#installer-lapplication-android)
+- [Construction Android (APK)](#générer-lapk)
+- [Configuration](#configuration)
+- [Contribuer](#contribuer)
 
 ---
 
