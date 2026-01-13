@@ -12,7 +12,7 @@ const ICS_URL_KEY = '@emploi_du_temps_ics_url';
 const COURSES_HASH_KEY = '@emploi_du_temps_courses_hash';
 
 // URL par défaut fournie par l'utilisateur
-const DEFAULT_ICS_URL = 'https://www.emploisdutemps.uha.fr/jsp/custom/modules/plannings/anonymous_cal.jsp?data=60dc6b2fb1eac2554ee1103516dc50b4e04e91d0526fa823618ff6fa9e7d7198dd65eb4f5911f810ef6a36d3b58d61bf314d669fae9ca422200cb711a9b76537,1';
+const DEFAULT_ICS_URL = 'https://www.emploisdutemps.uha.fr/jsp/custom/modules/plannings/anonymous_cal.jsp?data=b69e9594f80ff0463d0c0f8da12a5b8d2ad2bc44567c9aba276333fe3ae8d54a2a2c262ab3ba48506729f6560ae33af6fa8513c753526e332bda1edc491dcfab,1';
 
 export interface SyncResult {
   success: boolean;
