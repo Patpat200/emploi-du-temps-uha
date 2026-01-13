@@ -1,6 +1,6 @@
 # 📅 Emploi du Temps UHA
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.2-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Platform](https://img.shields.io/badge/platform-iOS%20%7C%20Android-lightgrey.svg)
 ![Built with](https://img.shields.io/badge/built%20with-Expo-000020.svg)
