@@ -4,7 +4,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useColors } from '@/hooks/use-colors';
 import { cn } from '@/lib/utils';
 import type { CourseEvent } from '@/lib/ics-parser';
-import { getSubjectColor, lightenColor, darkenColor } from '@/lib/color-service';
+import { getSubjectColor, darkenColor } from '@/lib/color-service';
 import { isEventModified, getModificationTimeRemaining, formatTimeRemaining } from '@/lib/notification-service';
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
@@ -86,9 +86,6 @@ export function CourseCard({ event, onPress }: CourseCardProps) {
     }
     onPress();
   };
-
-  const backgroundColor = lightenColor(subjectColor, 85);
-  const textColor = darkenColor(subjectColor, 20);
   
   return (
     <Pressable
@@ -101,106 +98,96 @@ export function CourseCard({ event, onPress }: CourseCardProps) {
       ]}
     >
       <View
-        className="rounded-xl p-4 mb-3 border-l-4 shadow-sm"
+        className="bg-surface rounded-xl p-4 mb-3 border-l-4 shadow-sm flex-row items-start gap-3"
         style={{
-          backgroundColor,
           borderLeftColor: subjectColor,
         }}
       >
-        <View className="flex-row items-start gap-3">
-          {/* Heure */}
-          <View className="items-center pt-1">
-            <Text
-              className="text-2xl font-bold"
-              style={{ color: textColor }}
-            >
-              {formatTime(event.startTime)}
-            </Text>
-            <Text
-              className="text-xs"
-              style={{ color: textColor, opacity: 0.7 }}
-            >
-              {formatTime(event.endTime)}
-            </Text>
-          </View>
+        {/* Heure */}
+        <View className="items-center pt-1 min-w-14">
+          <Text
+            className="text-2xl font-bold text-foreground"
+          >
+            {formatTime(event.startTime)}
+          </Text>
+          <Text
+            className="text-xs text-muted"
+          >
+            {formatTime(event.endTime)}
+          </Text>
+        </View>
+        
+        {/* Contenu */}
+        <View className="flex-1">
+          {/* Titre */}
+          <Text
+            className="text-base font-semibold text-foreground mb-1"
+            numberOfLines={2}
+          >
+            {event.title}
+          </Text>
           
-          {/* Contenu */}
-          <View className="flex-1">
-            {/* Titre */}
-            <Text
-              className="text-base font-semibold mb-1"
-              style={{ color: textColor }}
-              numberOfLines={2}
-            >
-              {event.title}
-            </Text>
-            
-            {/* Salle */}
-            {event.location && (
-              <View className="flex-row items-center gap-1 mb-1">
-                <Text
-                  className="text-sm"
-                  style={{ color: textColor, opacity: 0.8 }}
-                  numberOfLines={1}
-                >
-                  📍 {event.location}
-                </Text>
-              </View>
-            )}
-            
-            {/* Enseignant */}
-            {event.teacher && (
+          {/* Salle */}
+          {event.location && (
+            <View className="flex-row items-center gap-1 mb-1">
               <Text
-                className="text-xs"
-                style={{ color: textColor, opacity: 0.7 }}
+                className="text-sm text-muted"
                 numberOfLines={1}
               >
-                {event.teacher}
+                📍 {event.location}
               </Text>
-            )}
+            </View>
+          )}
+          
+          {/* Enseignant */}
+          {event.teacher && (
+            <Text
+              className="text-xs text-muted"
+              numberOfLines={1}
+            >
+              {event.teacher}
+            </Text>
+          )}
+          
+          {/* Badge type et statut */}
+          <View className="flex-row items-center gap-2 mt-2 flex-wrap">
+            <View className={cn('px-2 py-1 rounded-full', getTypeBadgeColor(event.type))}>
+              <Text className="text-xs font-semibold text-white">
+                {event.type}
+              </Text>
+            </View>
             
-            {/* Badge type et statut */}
-            <View className="flex-row items-center gap-2 mt-2 flex-wrap">
-              <View className={cn('px-2 py-1 rounded-full', getTypeBadgeColor(event.type))}>
-                <Text className="text-xs font-semibold text-white">
-                  {event.type}
+            {event.group && (
+              <View
+                className="px-2 py-1 rounded-full bg-border"
+              >
+                <Text
+                  className="text-xs font-medium text-muted"
+                >
+                  {event.group}
                 </Text>
               </View>
-              
-              {event.group && (
-                <View
-                  className="px-2 py-1 rounded-full"
-                  style={{ backgroundColor: subjectColor, opacity: 0.2 }}
-                >
-                  <Text
-                    className="text-xs font-medium"
-                    style={{ color: textColor }}
-                  >
-                    {event.group}
-                  </Text>
-                </View>
-              )}
-              
-              {/* Badge modification */}
-              {isModified && timeRemaining > 0 && (
-                <View
-                  className="px-2 py-1 rounded-full"
-                  style={{ backgroundColor: subjectColor }}
-                >
-                  <Text className="text-white text-xs font-bold">
-                    📝 {formatTimeRemaining(timeRemaining)}
-                  </Text>
-                </View>
-              )}
-              
-              {event.status === 'cancelled' && (
-                <View className="px-2 py-1 rounded-full bg-red-500">
-                  <Text className="text-white text-xs font-bold">
-                    ❌ Annulé
-                  </Text>
-                </View>
-              )}
-            </View>
+            )}
+            
+            {/* Badge modification */}
+            {isModified && timeRemaining > 0 && (
+              <View
+                className="px-2 py-1 rounded-full"
+                style={{ backgroundColor: subjectColor }}
+              >
+                <Text className="text-white text-xs font-bold">
+                  📝 {formatTimeRemaining(timeRemaining)}
+                </Text>
+              </View>
+            )}
+            
+            {event.status === 'cancelled' && (
+              <View className="px-2 py-1 rounded-full bg-red-500">
+                <Text className="text-white text-xs font-bold">
+                  ❌ Annulé
+                </Text>
+              </View>
+            )}
           </View>
         </View>
       </View>

@@ -73,11 +73,16 @@ export default function HomeScreen() {
         const dateObj = new Date(dateKey);
         const isToday = dateObj.toDateString() === today.toDateString();
         
+        // Trier les événements du jour par heure de début
+        const sortedEvents = dayEvents.sort((a, b) => 
+          a.startTime.getTime() - b.startTime.getTime()
+        );
+        
         newSections.push({
           date: dateKey,
           dateObj,
           isToday,
-          events: dayEvents,
+          events: sortedEvents,
         });
       });
       

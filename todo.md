@@ -47,3 +47,9 @@
 - [x] Faire disparaître le statut "modifié" après 1 heure
 - [x] Ajouter un système de timestamps pour les modifications
 - [x] Créer des tests pour le système de couleurs et notifications
+
+
+## Bugs à corriger - Ordre et Couleurs
+
+- [x] Trier les cours par heure de début (du plus tôt au plus tard)
+- [x] Simplifier le système de couleurs pour n'affecter que la barre de gauche
