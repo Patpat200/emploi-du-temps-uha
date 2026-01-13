@@ -9,14 +9,13 @@ Une application mobile moderne et fluide pour consulter l'emploi du temps de l'*
 
 ## Sommaire
 
-- [Fonctionnalités](#-fonctionnalités)
-- [Aperçu](#-aperçu)
-- [Stack Technique](#-stack-technique)
-- [Installation & Démarrage](#-installer-lapplication-android)
-- [Construction Android (APK)](#-générer-lapk)
-- [Architecture du Projet](#-architecture-du-projet)
-- [Configuration](#-configuration)
-- [Contribuer](#-contribuer)
+- [Fonctionnalités](#fonctionnalités)
+- [Aperçu](#aperçu)
+- [Stack Technique](#stack-technique)
+- [Installation & Démarrage](#installer-lapplication-android)
+- [Construction Android (APK)](#générer-lapk)
+- [Configuration](#configuration)
+- [Contribuer](#contribuer)
 
 ---
 
