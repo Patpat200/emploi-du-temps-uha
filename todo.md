@@ -53,3 +53,11 @@
 
 - [x] Trier les cours par heure de début (du plus tôt au plus tard)
 - [x] Simplifier le système de couleurs pour n'affecter que la barre de gauche
+
+
+## Nouvelles fonctionnalités - Synchronisation Automatique
+
+- [x] Ajouter les paramètres de synchronisation automatique (intervalle)
+- [x] Implémenter la vérification au démarrage de l'application
+- [x] Synchroniser automatiquement si l'intervalle est dépassé
+- [x] Afficher un indicateur de synchronisation en cours

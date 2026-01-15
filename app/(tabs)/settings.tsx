@@ -3,6 +3,7 @@ import { View, Text, TextInput, ScrollView, Pressable, Switch, Alert, ActivityIn
 import { ScreenContainer } from '@/components/screen-container';
 import { useColors } from '@/hooks/use-colors';
 import { getICSUrl, setICSUrl, syncSchedule } from '@/lib/sync-service';
+import { getSettings, saveSettings } from '@/lib/settings-service';
 import { cn } from '@/lib/utils';
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
@@ -23,11 +24,16 @@ export default function SettingsScreen() {
   const loadSettings = async () => {
     const url = await getICSUrl();
     setIcsUrlState(url);
+    
+    const settings = await getSettings();
+    setAutoSync(settings.autoSync);
+    setSyncInterval(settings.syncInterval);
+    setNotifications(settings.notificationsEnabled);
   };
   
   const handleSaveUrl = async () => {
     if (!icsUrl.trim()) {
-      Alert.alert('Erreur', 'L\'URL ne peut pas être vide');
+      Alert.alert('Erreur', 'L\'URL ne peut pas etre vide');
       return;
     }
     
@@ -46,18 +52,18 @@ export default function SettingsScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
       
-      // Synchroniser immédiatement pour tester l'URL
+      // Synchroniser immediatement pour tester l'URL
       const result = await syncSchedule();
       
       if (result.success) {
         Alert.alert(
-          'Succès',
-          `Synchronisation réussie ! ${result.events.length} événements chargés.`
+          'Succes',
+          `Synchronisation reussie ! ${result.events.length} evenements charges.`
         );
       } else {
         Alert.alert(
           'Erreur de synchronisation',
-          result.error || 'Impossible de télécharger les données. Vérifiez l\'URL et réessayez.'
+          result.error || 'Impossible de telecharger les donnees. Verifiez l\'URL et reessayez.'
         );
       }
     } catch (error) {
@@ -71,22 +77,27 @@ export default function SettingsScreen() {
     }
   };
   
-  const handleAutoSyncToggle = (value: boolean) => {
+  const handleAutoSyncToggle = async (value: boolean) => {
     setAutoSync(value);
+    await saveSettings({ autoSync: value });
+    
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
   
-  const handleNotificationsToggle = (value: boolean) => {
+  const handleSyncIntervalChange = async (text: string) => {
+    const value = parseInt(text, 10);
+    if (!isNaN(value) && value > 0) {
+      setSyncInterval(value);
+      await saveSettings({ syncInterval: value });
+    }
+  };
+  
+  const handleNotificationsToggle = async (value: boolean) => {
     setNotifications(value);
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-  };
-  
-  const handleIntervalChange = (interval: number) => {
-    setSyncInterval(interval);
+    await saveSettings({ notificationsEnabled: value });
+    
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
@@ -94,165 +105,114 @@ export default function SettingsScreen() {
   
   return (
     <ScreenContainer>
-      <ScrollView className="flex-1">
-        {/* En-tête */}
-        <View className="px-4 pt-4 pb-6">
-          <Text className="text-2xl font-bold text-foreground">
-            Paramètres
-          </Text>
-        </View>
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 16 }}>
+        {/* Titre */}
+        <Text className="text-2xl font-bold text-foreground mb-6">
+          Parametres
+        </Text>
         
-        {/* URL du flux ICS */}
-        <View className="px-4 mb-6">
-          <Text className="text-base font-semibold text-foreground mb-2">
-            URL du flux ICS
+        {/* Section URL */}
+        <View className="mb-8">
+          <Text className="text-lg font-semibold text-foreground mb-3">
+            URL de l'emploi du temps
           </Text>
-          <Text className="text-sm text-muted mb-3">
-            Collez l'URL de votre emploi du temps depuis le site de l'UHA. Une URL par defaut est deja configuree.
-          </Text>
-          <View className="bg-green-500/10 rounded-lg p-3 mb-3">
-            <Text className="text-green-600 text-xs font-medium">
-              OK L'URL ICS fonctionne correctement
-            </Text>
-            <Text className="text-green-600 text-xs mt-1">
-              Note: Le service RSS de l'UHA est en erreur. Utilisez l'URL ICS.
-            </Text>
-          </View>
+          
           <TextInput
             value={icsUrl}
             onChangeText={setIcsUrlState}
-            placeholder="https://www.emploisdutemps.uha.fr/..."
+            placeholder="https://..."
             placeholderTextColor={colors.muted}
-            className="bg-surface rounded-xl p-4 text-foreground mb-3"
-            multiline
-            numberOfLines={3}
-            editable={!testing}
-            style={{ color: colors.foreground }}
+            className="bg-surface border border-border rounded-lg p-3 text-foreground mb-3"
+            editable={!saving}
           />
+          
           <Pressable
             onPress={handleSaveUrl}
-            disabled={saving || testing}
+            disabled={saving}
             style={({ pressed }) => [
               {
-                opacity: pressed ? 0.7 : 1,
+                backgroundColor: colors.primary,
+                opacity: pressed ? 0.8 : 1,
               },
             ]}
+            className="rounded-lg p-3 items-center"
           >
-            <View
-              className={cn(
-                'bg-primary rounded-xl p-4 items-center flex-row justify-center gap-2',
-                (saving || testing) && 'opacity-50'
-              )}
-            >
-              {(saving || testing) && (
-                <ActivityIndicator size="small" color="#ffffff" />
-              )}
+            {testing ? (
+              <ActivityIndicator color="white" />
+            ) : (
               <Text className="text-white font-semibold">
-                {testing ? 'Test en cours...' : 'Enregistrer et tester'}
+                Enregistrer et tester
+              </Text>
+            )}
+          </Pressable>
+        </View>
+        
+        {/* Section Synchronisation Automatique */}
+        <View className="mb-8 bg-surface rounded-lg p-4 border border-border">
+          <View className="flex-row items-center justify-between mb-4">
+            <Text className="text-lg font-semibold text-foreground">
+              Synchronisation automatique
+            </Text>
+            <Switch
+              value={autoSync}
+              onValueChange={handleAutoSyncToggle}
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor={autoSync ? colors.primary : colors.muted}
+            />
+          </View>
+          
+          {autoSync && (
+            <View>
+              <Text className="text-sm text-muted mb-2">
+                Intervalle de synchronisation (minutes)
+              </Text>
+              <TextInput
+                value={syncInterval.toString()}
+                onChangeText={handleSyncIntervalChange}
+                placeholder="15"
+                placeholderTextColor={colors.muted}
+                keyboardType="number-pad"
+                className="bg-background border border-border rounded-lg p-3 text-foreground"
+              />
+              <Text className="text-xs text-muted mt-2">
+                L'application se synchronisera automatiquement au demarrage si la derniere mise a jour depasse cet intervalle.
               </Text>
             </View>
-          </Pressable>
-          
-          <View className="bg-blue-500/10 rounded-lg p-3 mt-3">
-            <Text className="text-blue-600 text-xs">
-              💡 Conseil: Cliquez sur "Enregistrer et tester" pour vérifier que l'URL fonctionne correctement.
-            </Text>
-          </View>
+          )}
         </View>
         
-        {/* Synchronisation automatique */}
-        <View className="px-4 mb-6">
-          <View className="bg-surface rounded-xl p-4">
-            <View className="flex-row items-center justify-between mb-4">
-              <View className="flex-1 pr-4">
-                <Text className="text-base font-semibold text-foreground mb-1">
-                  Synchronisation automatique
-                </Text>
-                <Text className="text-sm text-muted">
-                  Actualiser l'emploi du temps automatiquement
-                </Text>
-              </View>
-              <Switch
-                value={autoSync}
-                onValueChange={handleAutoSyncToggle}
-                trackColor={{ false: colors.border, true: colors.primary }}
-                thumbColor="#ffffff"
-              />
+        {/* Section Notifications */}
+        <View className="mb-8 bg-surface rounded-lg p-4 border border-border">
+          <View className="flex-row items-center justify-between">
+            <Text className="text-lg font-semibold text-foreground">
+              Notifications
+            </Text>
+            <Switch
+              value={notifications}
+              onValueChange={handleNotificationsToggle}
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor={notifications ? colors.primary : colors.muted}
+            />
+          </View>
+          <Text className="text-xs text-muted mt-2">
+            Recevez des notifications pour les changements de cours.
+          </Text>
+        </View>
+        
+        {/* Section Informations */}
+        <View className="bg-surface rounded-lg p-4 border border-border">
+          <Text className="text-lg font-semibold text-foreground mb-3">
+            A propos
+          </Text>
+          <View className="gap-2">
+            <View className="flex-row justify-between">
+              <Text className="text-muted">Version</Text>
+              <Text className="text-foreground font-semibold">1.0.2</Text>
             </View>
-            
-            {autoSync && (
-              <View>
-                <Text className="text-sm font-medium text-foreground mb-3">
-                  Fréquence de synchronisation
-                </Text>
-                <View className="flex-row gap-2">
-                  {[5, 15, 30, 60].map((interval) => (
-                    <Pressable
-                      key={interval}
-                      onPress={() => handleIntervalChange(interval)}
-                      style={({ pressed }) => [
-                        {
-                          opacity: pressed ? 0.7 : 1,
-                        },
-                      ]}
-                    >
-                      <View
-                        className={cn(
-                          'px-4 py-2 rounded-lg',
-                          syncInterval === interval ? 'bg-primary' : 'bg-border'
-                        )}
-                      >
-                        <Text
-                          className={cn(
-                            'text-sm font-medium',
-                            syncInterval === interval ? 'text-white' : 'text-muted'
-                          )}
-                        >
-                          {interval} min
-                        </Text>
-                      </View>
-                    </Pressable>
-                  ))}
-                </View>
-              </View>
-            )}
-          </View>
-        </View>
-        
-        {/* Notifications */}
-        <View className="px-4 mb-6">
-          <View className="bg-surface rounded-xl p-4">
-            <View className="flex-row items-center justify-between">
-              <View className="flex-1 pr-4">
-                <Text className="text-base font-semibold text-foreground mb-1">
-                  Notifications
-                </Text>
-                <Text className="text-sm text-muted">
-                  Recevoir une notification en cas de modification
-                </Text>
-              </View>
-              <Switch
-                value={notifications}
-                onValueChange={handleNotificationsToggle}
-                trackColor={{ false: colors.border, true: colors.primary }}
-                thumbColor="#ffffff"
-              />
+            <View className="flex-row justify-between">
+              <Text className="text-muted">Plateforme</Text>
+              <Text className="text-foreground font-semibold">Expo/React Native</Text>
             </View>
-          </View>
-        </View>
-        
-        {/* À propos */}
-        <View className="px-4 mb-6">
-          <View className="bg-surface rounded-xl p-4">
-            <Text className="text-base font-semibold text-foreground mb-2">
-              À propos
-            </Text>
-            <Text className="text-sm text-muted mb-1">
-              Version 1.0.0
-            </Text>
-            <Text className="text-sm text-muted">
-              Application d'emploi du temps pour l'UHA
-            </Text>
           </View>
         </View>
       </ScrollView>

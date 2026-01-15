@@ -7,6 +7,7 @@ import { CourseDetailModal } from '@/components/course-detail-modal';
 import { useColors } from '@/hooks/use-colors';
 import { syncSchedule, loadEvents, getLastSyncDate, initSyncService } from '@/lib/sync-service';
 import { groupEventsByDay, type CourseEvent } from '@/lib/ics-parser';
+import { getSettings } from '@/lib/settings-service';
 
 interface DaySection {
   date: string;
@@ -100,11 +101,49 @@ export default function HomeScreen() {
   }, []);
   
   /**
+   * Vérifie si une synchronisation automatique est nécessaire
+   */
+  const checkAutoSync = useCallback(async () => {
+    try {
+      const settings = await getSettings();
+      
+      if (!settings.autoSync) {
+        console.log('[AUTO-SYNC] Desactive');
+        await loadSchedule(false);
+        return;
+      }
+      
+      const lastSync = await getLastSyncDate();
+      const now = new Date();
+      
+      if (!lastSync) {
+        console.log('[AUTO-SYNC] Premiere synchronisation');
+        await loadSchedule(true);
+        return;
+      }
+      
+      // Verifier si l'intervalle est depasse (en minutes)
+      const timeSinceLastSync = (now.getTime() - lastSync.getTime()) / (1000 * 60);
+      
+      if (timeSinceLastSync >= settings.syncInterval) {
+        console.log(`[AUTO-SYNC] Intervalle depasse (${Math.round(timeSinceLastSync)}min >= ${settings.syncInterval}min)`);
+        await loadSchedule(true);
+      } else {
+        console.log(`[AUTO-SYNC] Pas besoin de sync (${Math.round(timeSinceLastSync)}min < ${settings.syncInterval}min)`);
+        await loadSchedule(false);
+      }
+    } catch (error) {
+      console.error('[AUTO-SYNC] Erreur:', error);
+      await loadSchedule(false);
+    }
+  }, [loadSchedule]);
+  
+  /**
    * Charge les données au montage du composant
    */
   useEffect(() => {
-    loadSchedule();
-  }, [loadSchedule]);
+    checkAutoSync();
+  }, [checkAutoSync]);
   
   /**
    * Gère le pull-to-refresh
@@ -140,7 +179,7 @@ export default function HomeScreen() {
     const diffMs = now.getTime() - lastSync.getTime();
     const diffMins = Math.floor(diffMs / (1000 * 60));
     
-    if (diffMins < 1) return 'À l\'instant';
+    if (diffMins < 1) return 'A l\'instant';
     if (diffMins < 60) return `Il y a ${diffMins} min`;
     
     const diffHours = Math.floor(diffMins / 60);
@@ -191,7 +230,7 @@ export default function HomeScreen() {
       <ScreenContainer className="items-center justify-center p-6">
         <Text className="text-6xl mb-4">📅</Text>
         <Text className="text-xl font-bold text-foreground mb-2">
-          Aucun cours à venir
+          Aucun cours a venir
         </Text>
         <Text className="text-muted text-center mb-6">
           Tirez vers le bas pour actualiser
@@ -216,13 +255,13 @@ export default function HomeScreen() {
         </Text>
         {lastSync && (
           <Text className="text-sm text-muted">
-            Mis à jour {formatLastSync()}
+            Mis a jour {formatLastSync()}
           </Text>
         )}
         {error && (
           <View className="bg-warning/10 rounded-lg p-2 mt-2">
             <Text className="text-warning text-xs">
-              ⚠️ {error}
+              Attention {error}
             </Text>
           </View>
         )}
