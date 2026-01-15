@@ -120,14 +120,14 @@ export default function SettingsScreen() {
             URL du flux ICS
           </Text>
           <Text className="text-sm text-muted mb-3">
-            Collez l\'URL de votre emploi du temps depuis le site de l\'UHA. Une URL par defaut est deja configuree.
+            Collez l'URL de votre emploi du temps depuis le site de l'UHA. Une URL par defaut est deja configuree.
           </Text>
           <View className="bg-green-500/10 rounded-lg p-3 mb-3">
             <Text className="text-green-600 text-xs font-medium">
-              OK L\'URL ICS fonctionne correctement
+              OK L'URL ICS fonctionne correctement
             </Text>
             <Text className="text-green-600 text-xs mt-1">
-              Note: Le service RSS de l\'UHA est en erreur. Utilisez l\'URL ICS.
+              Note: Le service RSS de l'UHA est en erreur. Utilisez l'URL ICS.
             </Text>
           </View>
           <TextInput
@@ -167,7 +167,7 @@ export default function SettingsScreen() {
           
           <View className="bg-blue-500/10 rounded-lg p-3 mt-3">
             <Text className="text-blue-600 text-xs">
-              Conseil: Cliquez sur "Enregistrer et tester" pour verifier que l\'URL fonctionne correctement.
+              Conseil: Cliquez sur "Enregistrer et tester" pour verifier que l'URL fonctionne correctement.
             </Text>
           </View>
         </View>
@@ -181,7 +181,7 @@ export default function SettingsScreen() {
                   Synchronisation automatique
                 </Text>
                 <Text className="text-sm text-muted">
-                  Actualiser l\'emploi du temps automatiquement
+                  Actualiser l'emploi du temps automatiquement
                 </Text>
               </View>
               <Switch
@@ -263,7 +263,7 @@ export default function SettingsScreen() {
               Version 1.0.2
             </Text>
             <Text className="text-sm text-muted">
-              Application d\'emploi du temps pour l\'UHA
+              Application d'emploi du temps pour l'UHA
             </Text>
           </View>
         </View>
