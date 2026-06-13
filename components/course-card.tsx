@@ -6,8 +6,7 @@ import { cn } from '@/lib/utils';
 import type { CourseEvent } from '@/lib/ics-parser';
 import { getSubjectColor, darkenColor } from '@/lib/color-service';
 import { isEventModified, getModificationTimeRemaining, formatTimeRemaining } from '@/lib/notification-service';
-import * as Haptics from 'expo-haptics';
-import { Platform } from 'react-native';
+import { impact } from '@/lib/haptics';
 
 interface CourseCardProps {
   event: CourseEvent;
@@ -81,9 +80,7 @@ export const CourseCard = memo(function CourseCard({ event, onPress }: CourseCar
   }, [event.id]);
   
   const handlePress = () => {
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
+    impact();
     onPress();
   };
   
