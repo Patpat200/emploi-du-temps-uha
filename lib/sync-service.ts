@@ -59,9 +59,14 @@ export async function setICSUrl(url: string): Promise<void> {
 /**
  * Télécharge le fichier ICS depuis l'URL
  */
+const FETCH_TIMEOUT_MS = 10_000;
+
 async function downloadICS(url: string): Promise<string> {
   console.log('[SYNC] Téléchargement depuis:', url);
-  
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
   try {
     const response = await fetch(url, {
       method: 'GET',
@@ -69,23 +74,24 @@ async function downloadICS(url: string): Promise<string> {
         'Accept': 'text/calendar, application/rss+xml, */*',
         'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15',
       },
+      signal: controller.signal,
     });
-    
-    console.log('[SYNC] Status:', response.status);
-    console.log('[SYNC] Headers:', {
-      contentType: response.headers.get('content-type'),
-      contentLength: response.headers.get('content-length'),
-    });
-    
+
+    clearTimeout(timeoutId);
+
     if (!response.ok) {
       throw new Error(`Erreur HTTP ${response.status}: ${response.statusText}`);
     }
-    
+
     const text = await response.text();
     console.log('[SYNC] Contenu reçu:', text.length, 'caractères');
-    
+
     return text;
   } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('Le serveur met trop de temps à répondre (délai de 10s dépassé). Les données en cache sont utilisées.');
+    }
     const errorMsg = error instanceof Error ? error.message : String(error);
     console.error('[SYNC] Erreur de téléchargement:', errorMsg);
     throw error;

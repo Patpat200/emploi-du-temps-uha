@@ -79,7 +79,9 @@ export default function CalendarScreen() {
    */
   const getDayEvents = () => {
     const dateStr = selectedDate.toISOString().split('T')[0];
-    return allEvents.filter(event => event.startTime.toISOString().split('T')[0] === dateStr);
+    return allEvents
+      .filter(event => event.startTime.toISOString().split('T')[0] === dateStr)
+      .sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
   };
   
   /**
