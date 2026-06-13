@@ -7,17 +7,20 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const AUTO_SYNC_KEY = '@emploi_du_temps_auto_sync';
 const SYNC_INTERVAL_KEY = '@emploi_du_temps_sync_interval';
 const NOTIFICATIONS_KEY = '@emploi_du_temps_notifications';
+const HAPTICS_KEY = '@emploi_du_temps_haptics';
 
 export interface AppSettings {
   autoSync: boolean;
-  syncInterval: number; // en minutes
+  syncInterval: number;
   notificationsEnabled: boolean;
+  hapticsEnabled: boolean;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
   autoSync: true,
-  syncInterval: 15, // 15 minutes par défaut
+  syncInterval: 15,
   notificationsEnabled: false,
+  hapticsEnabled: true,
 };
 
 /**
@@ -31,10 +34,13 @@ export async function getSettings(): Promise<AppSettings> {
       AsyncStorage.getItem(NOTIFICATIONS_KEY),
     ]);
 
+    const hapticsStr = await AsyncStorage.getItem(HAPTICS_KEY);
+
     return {
       autoSync: autoSyncStr !== null ? JSON.parse(autoSyncStr) : DEFAULT_SETTINGS.autoSync,
       syncInterval: syncIntervalStr !== null ? parseInt(syncIntervalStr, 10) : DEFAULT_SETTINGS.syncInterval,
       notificationsEnabled: notificationsStr !== null ? JSON.parse(notificationsStr) : DEFAULT_SETTINGS.notificationsEnabled,
+      hapticsEnabled: hapticsStr !== null ? JSON.parse(hapticsStr) : DEFAULT_SETTINGS.hapticsEnabled,
     };
   } catch (error) {
     console.error('Erreur lors de la récupération des paramètres:', error);
@@ -61,6 +67,10 @@ export async function saveSettings(settings: Partial<AppSettings>): Promise<void
       promises.push(AsyncStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(settings.notificationsEnabled)));
     }
 
+    if (settings.hapticsEnabled !== undefined) {
+      promises.push(AsyncStorage.setItem(HAPTICS_KEY, JSON.stringify(settings.hapticsEnabled)));
+    }
+
     await Promise.all(promises);
     console.log('[SETTINGS] Paramètres enregistrés:', settings);
   } catch (error) {
@@ -77,6 +87,7 @@ export async function resetSettings(): Promise<void> {
       AsyncStorage.removeItem(AUTO_SYNC_KEY),
       AsyncStorage.removeItem(SYNC_INTERVAL_KEY),
       AsyncStorage.removeItem(NOTIFICATIONS_KEY),
+      AsyncStorage.removeItem(HAPTICS_KEY),
     ]);
     console.log('[SETTINGS] Paramètres réinitialisés');
   } catch (error) {

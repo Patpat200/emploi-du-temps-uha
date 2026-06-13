@@ -14,6 +14,7 @@ export default function SettingsScreen() {
   const [autoSync, setAutoSync] = useState(true);
   const [syncInterval, setSyncInterval] = useState(15);
   const [notifications, setNotifications] = useState(false);
+  const [haptics, setHaptics] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   
@@ -29,6 +30,7 @@ export default function SettingsScreen() {
     setAutoSync(settings.autoSync);
     setSyncInterval(settings.syncInterval);
     setNotifications(settings.notificationsEnabled);
+    setHaptics(settings.hapticsEnabled);
   };
   
   const handleSaveUrl = async () => {
@@ -48,7 +50,7 @@ export default function SettingsScreen() {
     try {
       await setICSUrl(icsUrl);
       
-      if (Platform.OS !== 'web') {
+      if (Platform.OS !== 'web' && haptics) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
       
@@ -80,17 +82,17 @@ export default function SettingsScreen() {
   const handleAutoSyncToggle = async (value: boolean) => {
     setAutoSync(value);
     await saveSettings({ autoSync: value });
-    
-    if (Platform.OS !== 'web') {
+
+    if (Platform.OS !== 'web' && haptics) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
-  
+
   const handleIntervalChange = async (interval: number) => {
     setSyncInterval(interval);
     await saveSettings({ syncInterval: interval });
-    
-    if (Platform.OS !== 'web') {
+
+    if (Platform.OS !== 'web' && haptics) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
@@ -98,8 +100,17 @@ export default function SettingsScreen() {
   const handleNotificationsToggle = async (value: boolean) => {
     setNotifications(value);
     await saveSettings({ notificationsEnabled: value });
-    
-    if (Platform.OS !== 'web') {
+
+    if (Platform.OS !== 'web' && haptics) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
+
+  const handleHapticsToggle = async (value: boolean) => {
+    setHaptics(value);
+    await saveSettings({ hapticsEnabled: value });
+
+    if (Platform.OS !== 'web' && value) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
@@ -253,6 +264,28 @@ export default function SettingsScreen() {
           </View>
         </View>
         
+        {/* Vibrations */}
+        <View className="px-4 mb-6">
+          <View className="bg-surface rounded-xl p-4">
+            <View className="flex-row items-center justify-between">
+              <View className="flex-1 pr-4">
+                <Text className="text-base font-semibold text-foreground mb-1">
+                  Vibrations
+                </Text>
+                <Text className="text-sm text-muted">
+                  Retour haptique lors des interactions
+                </Text>
+              </View>
+              <Switch
+                value={haptics}
+                onValueChange={handleHapticsToggle}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor="#ffffff"
+              />
+            </View>
+          </View>
+        </View>
+
         {/* A propos */}
         <View className="px-4 mb-6">
           <View className="bg-surface rounded-xl p-4">
