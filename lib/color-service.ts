@@ -35,6 +35,9 @@ interface SubjectColorMap {
   [subject: string]: string;
 }
 
+// Cache mémoire pour éviter les appels AsyncStorage répétés
+const memoryCache = new Map<string, string>();
+
 /**
  * Génère un hash simple pour une chaîne de caractères
  */
@@ -52,28 +55,30 @@ function hashString(str: string): number {
  * Récupère la couleur pour une matière donnée
  */
 export async function getSubjectColor(subject: string): Promise<string> {
+  // Vérifier le cache mémoire d'abord
+  const cached = memoryCache.get(subject);
+  if (cached) return cached;
+
   try {
     const colorsJson = await AsyncStorage.getItem(COLORS_STORAGE_KEY);
     const colors: SubjectColorMap = colorsJson ? JSON.parse(colorsJson) : {};
-    
-    // Si la couleur existe déjà, la retourner
+
     if (colors[subject]) {
+      memoryCache.set(subject, colors[subject]);
       return colors[subject];
     }
-    
-    // Sinon, générer une nouvelle couleur de façon déterministe
+
     const hash = hashString(subject);
     const colorIndex = hash % COLOR_PALETTE.length;
     const color = COLOR_PALETTE[colorIndex];
-    
-    // Sauvegarder la couleur pour la prochaine fois
+
     colors[subject] = color;
+    memoryCache.set(subject, color);
     await AsyncStorage.setItem(COLORS_STORAGE_KEY, JSON.stringify(colors));
-    
+
     return color;
   } catch (error) {
     console.error('Erreur lors de la récupération de la couleur:', error);
-    // Retourner une couleur par défaut en cas d'erreur
     return COLOR_PALETTE[0];
   }
 }
@@ -96,6 +101,7 @@ export async function getAllSubjectColors(): Promise<SubjectColorMap> {
  */
 export async function resetSubjectColors(): Promise<void> {
   try {
+    memoryCache.clear();
     await AsyncStorage.removeItem(COLORS_STORAGE_KEY);
   } catch (error) {
     console.error('Erreur lors de la réinitialisation des couleurs:', error);
