@@ -1,5 +1,5 @@
 import { Text, View, Pressable } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, memo } from 'react';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useColors } from '@/hooks/use-colors';
 import { cn } from '@/lib/utils';
@@ -45,7 +45,7 @@ function getTypeBadgeColor(type: CourseEvent['type']): string {
   }
 }
 
-export function CourseCard({ event, onPress }: CourseCardProps) {
+export const CourseCard = memo(function CourseCard({ event, onPress }: CourseCardProps) {
   const colors = useColors();
   const [subjectColor, setSubjectColor] = useState<string>('#0a7ea4');
   const [isModified, setIsModified] = useState(false);
@@ -193,4 +193,4 @@ export function CourseCard({ event, onPress }: CourseCardProps) {
       </View>
     </Pressable>
   );
-}
+});

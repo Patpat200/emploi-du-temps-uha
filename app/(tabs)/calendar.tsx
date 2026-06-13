@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, FlatList, RefreshControl, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, RefreshControl, ActivityIndicator, Pressable } from 'react-native';
 import { ScreenContainer } from '@/components/screen-container';
 import { CalendarView } from '@/components/calendar-view';
 import { CourseCard } from '@/components/course-card';
@@ -99,6 +99,22 @@ export default function CalendarScreen() {
   };
   
   /**
+   * Revient à aujourd'hui
+   */
+  const handleGoToToday = () => {
+    setSelectedDate(new Date());
+  };
+
+  const isToday = (() => {
+    const now = new Date();
+    return (
+      selectedDate.getFullYear() === now.getFullYear() &&
+      selectedDate.getMonth() === now.getMonth() &&
+      selectedDate.getDate() === now.getDate()
+    );
+  })();
+
+  /**
    * Navigue vers la semaine précédente
    */
   const handlePreviousWeek = () => {
@@ -170,9 +186,22 @@ export default function CalendarScreen() {
           <View>
             {/* En-tête */}
             <View className="px-4 pt-4 pb-4">
-              <Text className="text-2xl font-bold text-foreground mb-1">
-                Calendrier
-              </Text>
+              <View className="flex-row items-center justify-between mb-1">
+                <Text className="text-2xl font-bold text-foreground">
+                  Calendrier
+                </Text>
+                {!isToday && (
+                  <Pressable
+                    onPress={handleGoToToday}
+                    className="px-3 py-1.5 rounded-full"
+                    style={{ backgroundColor: colors.tint }}
+                  >
+                    <Text className="text-white text-sm font-semibold">
+                      Aujourd'hui
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
               {lastSync && (
                 <Text className="text-sm text-muted">
                   Mis à jour {formatLastSync()}
