@@ -5,8 +5,7 @@ import { useColors } from '@/hooks/use-colors';
 import { getICSUrl, setICSUrl, syncSchedule } from '@/lib/sync-service';
 import { getSettings, saveSettings } from '@/lib/settings-service';
 import { cn } from '@/lib/utils';
-import * as Haptics from 'expo-haptics';
-import { Platform } from 'react-native';
+import { impact, notification, setHapticsEnabled } from '@/lib/haptics';
 
 export default function SettingsScreen() {
   const colors = useColors();
@@ -50,9 +49,7 @@ export default function SettingsScreen() {
     try {
       await setICSUrl(icsUrl);
       
-      if (Platform.OS !== 'web' && haptics) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
+      notification();
       
       // Synchroniser immediatement pour tester l'URL
       const result = await syncSchedule();
@@ -83,36 +80,28 @@ export default function SettingsScreen() {
     setAutoSync(value);
     await saveSettings({ autoSync: value });
 
-    if (Platform.OS !== 'web' && haptics) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
+    impact();
   };
 
   const handleIntervalChange = async (interval: number) => {
     setSyncInterval(interval);
     await saveSettings({ syncInterval: interval });
 
-    if (Platform.OS !== 'web' && haptics) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
+    impact();
   };
   
   const handleNotificationsToggle = async (value: boolean) => {
     setNotifications(value);
     await saveSettings({ notificationsEnabled: value });
 
-    if (Platform.OS !== 'web' && haptics) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
+    impact();
   };
 
   const handleHapticsToggle = async (value: boolean) => {
     setHaptics(value);
+    setHapticsEnabled(value);
     await saveSettings({ hapticsEnabled: value });
-
-    if (Platform.OS !== 'web' && value) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
+    if (value) impact();
   };
   
   return (

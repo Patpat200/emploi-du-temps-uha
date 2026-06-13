@@ -2,8 +2,7 @@ import { View, Text, Pressable, FlatList } from 'react-native';
 import { useColors } from '@/hooks/use-colors';
 import { cn } from '@/lib/utils';
 import type { CourseEvent } from '@/lib/ics-parser';
-import * as Haptics from 'expo-haptics';
-import { Platform } from 'react-native';
+import { impact } from '@/lib/haptics';
 
 interface CalendarViewProps {
   events: CourseEvent[];
@@ -82,9 +81,7 @@ function DayCell({
   return (
     <Pressable
       onPress={() => {
-        if (Platform.OS !== 'web') {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        }
+        impact();
         onPress();
       }}
       style={({ pressed }) => [
@@ -186,9 +183,7 @@ export function CalendarView({
       <View className="flex-row items-center justify-between mb-4">
         <Pressable
           onPress={() => {
-            if (Platform.OS !== 'web') {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            }
+            impact();
             onPreviousWeek();
           }}
           style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
@@ -213,9 +208,7 @@ export function CalendarView({
         
         <Pressable
           onPress={() => {
-            if (Platform.OS !== 'web') {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            }
+            impact();
             onNextWeek();
           }}
           style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
